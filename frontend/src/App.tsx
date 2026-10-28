@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { courses, getAllLessons, getCourse, courseHoursFromModules, formatDuration } from './data/courses'
 import type { Course, Module } from './data/courses'
-import { downloadCertificate } from './lib/certificate'
+import { downloadCertificate, getOrCreateCertificateId } from './lib/certificate'
 import { getLearnerName, getProgress, resetProgress, setLearnerName, toggleLesson, saveProgress } from './lib/progress'
 import { getStoredUser, fetchCurrentUser, clearAuth } from './lib/auth'
 import type { AuthUser } from './lib/auth'
@@ -519,6 +519,7 @@ function CertificatePage({ courseId }: { courseId: string }) {
   const course = getCourse(courseId)
   const [name, setName] = useState(getLearnerName())
   const [error, setError] = useState('')
+  const [certId] = useState(() => getOrCreateCertificateId(courseId))
 
   useEffect(() => {
     if (!course?.available) go('/')
@@ -551,6 +552,7 @@ function CertificatePage({ courseId }: { courseId: string }) {
       course: course.title,
       hours,
       date,
+      certificateId: certId,
     })
   }
 
@@ -588,7 +590,10 @@ function CertificatePage({ courseId }: { courseId: string }) {
       </label>
       {error && <p className="error">{error}</p>}
       <div className="preview">
-        <p className="preview-kicker">ForgeLearn Academy</p>
+        <div className="preview-top-row">
+          <p className="preview-kicker">ForgeLearn Academy</p>
+          <p className="preview-uuid-badge">UUID: <span>{certId}</span></p>
+        </div>
         <h2>Certificate of Completion</h2>
         <p>This is to certify that</p>
         <p className="preview-name">{name.trim() || 'Your name'}</p>
@@ -596,6 +601,9 @@ function CertificatePage({ courseId }: { courseId: string }) {
         <p className="preview-course">{course.title}</p>
         <p>
           {hours} hours · {date}
+        </p>
+        <p className="preview-cert-id">
+          Certificate UUID: <span>{certId}</span>
         </p>
       </div>
       <div className="row">

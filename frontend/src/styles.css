@@ -470,11 +470,34 @@ a {
   border-color: var(--gold);
 }
 
+.preview-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
 .preview-kicker {
   color: var(--gold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 0.75rem;
+  margin: 0;
+}
+
+.preview-uuid-badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.preview-uuid-badge span,
+.preview-cert-id span {
+  color: var(--gold);
+  font-weight: 700;
 }
 
 .preview-name {
@@ -486,6 +509,14 @@ a {
 .preview-course {
   font-family: Fraunces, Georgia, serif;
   font-size: 1.2rem;
+}
+
+.preview-cert-id {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .site-footer {

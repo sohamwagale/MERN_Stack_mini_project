@@ -1,13 +1,61 @@
 import { jsPDF } from 'jspdf'
 
-type CertificateInput = {
+export type CertificateInput = {
   name: string
   course: string
   hours: number
   date: string
+  certificateId?: string
 }
 
-export function downloadCertificate({ name, course, hours, date }: CertificateInput) {
+/**
+ * Generates a unique 10-digit/character alphanumeric certificate ID (e.g. "9K2M4X7B1Z").
+ * Strictly 10 characters in length, containing uppercase letters (A-Z) and digits (0-9).
+ */
+export function generateCertificateId(): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const getRandomByte = (): number => {
+    if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.getRandomValues === 'function') {
+      const arr = new Uint8Array(1)
+      window.crypto.getRandomValues(arr)
+      return arr[0]
+    }
+    return Math.floor(Math.random() * 256)
+  }
+
+  let id = ''
+  do {
+    id = ''
+    for (let i = 0; i < 10; i++) {
+      id += chars[getRandomByte() % chars.length]
+    }
+  } while (!/[A-Z]/.test(id) || !/[0-9]/.test(id))
+
+  return id
+}
+
+/**
+ * Retrieves a persistent certificate ID for a completed course or generates and caches a new one.
+ */
+export function getOrCreateCertificateId(courseId: string): string {
+  const key = `forgelearn-cert-id:${courseId}`
+  try {
+    const existing = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null
+    if (existing && /^[A-Za-z0-9]{10}$/.test(existing)) {
+      return existing.toUpperCase()
+    }
+    const fresh = generateCertificateId()
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, fresh)
+    }
+    return fresh
+  } catch {
+    return generateCertificateId()
+  }
+}
+
+export function downloadCertificate({ name, course, hours, date, certificateId }: CertificateInput): string {
+  const certId = (certificateId && certificateId.trim()) || generateCertificateId()
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
   const width = doc.internal.pageSize.getWidth()
   const height = doc.internal.pageSize.getHeight()
@@ -20,6 +68,12 @@ export function downloadCertificate({ name, course, hours, date }: CertificateIn
   doc.rect(28, 28, width - 56, height - 56, 'S')
   doc.setLineWidth(1.2)
   doc.rect(38, 38, width - 76, height - 76, 'S')
+
+  // Top-right corner UUID badge
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(212, 175, 55)
+  doc.text(`UUID: ${certId}`, width - 55, 62, { align: 'right' })
 
   doc.setTextColor(212, 175, 55)
   doc.setFont('times', 'italic')
@@ -83,6 +137,13 @@ export function downloadCertificate({ name, course, hours, date }: CertificateIn
   doc.text('A. Rao', width / 2 + 180, 432, { align: 'center' })
   doc.text('ForgeLearn', width / 2 + 180, 468, { align: 'center' })
 
+  // Unique 10-digit alphanumeric Certificate UUID
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(212, 175, 55)
+  doc.text(`Certificate UUID: ${certId}`, width / 2, 510, { align: 'center' })
+
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   doc.save(`forgelearn-${slug || 'certificate'}.pdf`)
+  return certId
 }
